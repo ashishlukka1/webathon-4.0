@@ -1,0 +1,91 @@
+### =========================================
+### 1️⃣ Register User
+### =========================================
+POST http://localhost:5000/api/users/register
+Content-Type: application/json
+
+{
+  "name": "ashish",
+  "email": "ashish@gmail.com",
+  "password": "ashish123"
+}
+
+###
+
+### =========================================
+### 2️⃣ Login User
+### =========================================
+POST http://localhost:5000/api/users/login
+Content-Type: application/json
+
+{
+  "email": "ashish@gmail.com",
+  "password": "ashish123"
+}
+
+###
+
+### =========================================
+### 3️⃣ Chat - Send Message (USE TOKEN FROM LOGIN)
+### Replace TOKEN with actual token from login response
+### =========================================
+POST http://localhost:5000/api/chat
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "userId": "6998c7320ff0708150423515",
+  "message": "Should I give discount to loyal customers?",
+  "category": "pricing"
+}
+
+###
+
+### =========================================
+### 4️⃣ Get Chat History (USE TOKEN FROM LOGIN)
+### =========================================
+GET http://localhost:5000/api/chat/history
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### =========================================
+### 5️⃣ Get Conversation Details (USE TOKEN FROM LOGIN)
+### Replace CONVERSATION_ID with actual ID
+### =========================================
+GET http://localhost:5000/api/chat/CONVERSATION_ID
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### =========================================
+### 6️⃣ Test RAG Context (TEST ENDPOINT)
+### =========================================
+GET http://localhost:5000/api/test/rag-context?userId=YOUR_USER_ID&message=pricing
+
+###
+
+### =========================================
+### 7️⃣ Validate API Key (TEST ENDPOINT)
+### =========================================
+GET http://localhost:5000/api/test/validate-api
+
+###
+
+### =========================================
+### 8️⃣ Get Stats (TEST ENDPOINT)
+### =========================================
+GET http://localhost:5000/api/test/stats?userId=YOUR_USER_ID
+
+###
+
+### =========================================
+### 9️⃣ Generate Response (TEST ENDPOINT)
+### =========================================
+POST http://localhost:5000/api/test/generate-response
+Content-Type: application/json
+
+{
+  "userMessage": "Should I give discount?",
+  "userId": "YOUR_USER_ID"
+}
