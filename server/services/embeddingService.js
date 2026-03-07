@@ -5,6 +5,7 @@ let env, AutoTokenizer, AutoModel;
 const embeddingCache = new Map();
 let model = null;
 let tokenizer = null;
+let useFallbackEmbedding = process.env.VERCEL === "1" || process.env.DISABLE_LOCAL_MODELS === "true";
 
 // Load transformers dynamically (fix for ESM module)
 async function loadTransformers() {
@@ -21,6 +22,7 @@ async function loadTransformers() {
 }
 
 async function initializeModel() {
+  if (useFallbackEmbedding) return;
   if (model && tokenizer) return;
 
   try {
@@ -39,8 +41,21 @@ async function initializeModel() {
     console.log("MiniLM loaded successfully!");
   } catch (err) {
     console.error("Model initialization failed:", err);
-    throw err;
+    useFallbackEmbedding = true;
   }
+}
+
+function createFallbackEmbedding(text, dimensions = 128) {
+  const vec = new Array(dimensions).fill(0);
+  const tokens = text.toLowerCase().split(/\W+/).filter(Boolean);
+  for (const token of tokens) {
+    let hash = 0;
+    for (let i = 0; i < token.length; i++) {
+      hash = (hash * 31 + token.charCodeAt(i)) >>> 0;
+    }
+    vec[hash % dimensions] += 1;
+  }
+  return normalizeVector(vec);
 }
 
 // Normalize vector to unit length
@@ -102,6 +117,12 @@ const generateEmbedding = async (text) => {
 
     if (!model || !tokenizer) {
       await initializeModel();
+    }
+
+    if (useFallbackEmbedding || !model || !tokenizer) {
+      const fallback = createFallbackEmbedding(trimmed);
+      embeddingCache.set(trimmed, fallback);
+      return fallback;
     }
 
     console.log(`Generating embedding for: ${trimmed.substring(0, 50)}...`);

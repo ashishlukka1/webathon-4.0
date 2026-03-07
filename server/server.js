@@ -16,8 +16,29 @@ const speechRoutes = require("./routes/speech");
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "https://webathon-4-0-client.vercel.app",
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    try {
+      const hostname = new URL(origin).hostname;
+      if (hostname.endsWith(".vercel.app")) return callback(null, true);
+    } catch (_) {}
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // Connect DB
@@ -34,6 +55,16 @@ app.get("/api/health", (req, res) => {
   res.json({
     status: "✓ Server OK",
     timestamp: new Date()
+  });
+});
+
+// Global error handler (prevents unhandled route errors from returning opaque platform responses)
+app.use((err, req, res, next) => {
+  console.error("Unhandled server error:", err);
+  if (res.headersSent) return next(err);
+  return res.status(500).json({
+    error: "Internal server error",
+    details: err?.message || "Unknown error",
   });
 });
 

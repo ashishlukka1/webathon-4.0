@@ -50,6 +50,24 @@ const initializeClassifier = async () => {
 const classifyCategory = async (userMessage) => {
 
   try {
+    if (process.env.VERCEL === "1" || process.env.DISABLE_LOCAL_MODELS === "true") {
+      const lower = (userMessage || "").toLowerCase();
+      const keywordMap = [
+        { key: "financial", words: ["budget", "cost", "price", "pricing", "investment", "money"] },
+        { key: "product", words: ["feature", "product", "design", "release", "roadmap"] },
+        { key: "customer-service", words: ["support", "customer", "service", "ticket"] },
+        { key: "strategic", words: ["strategy", "long-term", "market", "vision"] },
+        { key: "operational", words: ["process", "workflow", "operation", "execute"] },
+        { key: "client", words: ["client", "contract", "proposal", "stakeholder"] },
+      ];
+      const hit = keywordMap.find((entry) => entry.words.some((w) => lower.includes(w)));
+      return {
+        category: hit?.key || "general",
+        confidence: hit ? 0.5 : 0.2,
+        allScores: {},
+      };
+    }
+
     const clf = await initializeClassifier();
 
     const labels = Object.values(label_map);
