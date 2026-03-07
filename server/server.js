@@ -6,7 +6,6 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
 
 const connectDB = require("./config/db");
 
@@ -20,12 +19,6 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Create uploads folder if missing (local only)
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-  console.log("📁 Created uploads directory");
-}
 
 // Connect DB
 connectDB();
