@@ -123,8 +123,19 @@ const chat = async (req, res) => {
 
     console.log(`Chat request from user: ${userId}`);
 
-    const messageEmbedding = await generateEmbedding(message);
-    const tags = await extractTags(message);
+    let messageEmbedding = null;
+    try {
+      messageEmbedding = await generateEmbedding(message);
+    } catch (embeddingErr) {
+      console.warn("Message embedding failed, continuing without embedding:", embeddingErr.message);
+    }
+
+    let tags = [];
+    try {
+      tags = await extractTags(message);
+    } catch (tagErr) {
+      console.warn("Tag extraction failed, continuing without tags:", tagErr.message);
+    }
 
     let detectedCategory = category;
     let classificationConfidence = 0;
@@ -187,18 +198,22 @@ const chat = async (req, res) => {
           );
 
           if (matched.length < 3) {
-            const topicEmbedding = await generateEmbedding(topic);
-            const semanticMatches = topicMessages
-              .map((row) => ({
-                ...row,
-                score: Array.isArray(row.embedding)
-                  ? cosineSimilarity(topicEmbedding, row.embedding)
-                  : 0,
-              }))
-              .filter((row) => row.score > 0.45)
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 8);
-            matched = [...matched, ...semanticMatches];
+            try {
+              const topicEmbedding = await generateEmbedding(topic);
+              const semanticMatches = topicMessages
+                .map((row) => ({
+                  ...row,
+                  score: Array.isArray(row.embedding)
+                    ? cosineSimilarity(topicEmbedding, row.embedding)
+                    : 0,
+                }))
+                .filter((row) => row.score > 0.45)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 8);
+              matched = [...matched, ...semanticMatches];
+            } catch (topicEmbeddingErr) {
+              console.warn("Topic embedding fallback failed:", topicEmbeddingErr.message);
+            }
           }
 
           aiResponse = buildTopicHistoryReply(topic, matched);

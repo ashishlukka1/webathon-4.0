@@ -43,7 +43,12 @@ const getUserMemory = async (userId) => {
 
 const retrieveContext = async (userId, userQuery, category = null, topK = 5) => {
   try {
-    const queryEmbedding = await generateEmbedding(userQuery);
+    let queryEmbedding = null;
+    try {
+      queryEmbedding = await generateEmbedding(userQuery);
+    } catch (err) {
+      console.warn("Query embedding failed, using recency-only context:", err.message);
+    }
 
     const filter = { userId };
     if (category) filter.category = category;
@@ -59,7 +64,7 @@ const retrieveContext = async (userId, userQuery, category = null, topK = 5) => 
     const oldestTs = new Date(allConversations[allConversations.length - 1].createdAt).getTime();
 
     const scoredConversations = allConversations.map((conv) => {
-      const semanticSimilarity = Array.isArray(conv.embedding)
+      const semanticSimilarity = queryEmbedding && Array.isArray(conv.embedding)
         ? cosineSimilarity(queryEmbedding, conv.embedding) || 0
         : 0;
 
@@ -85,9 +90,17 @@ const retrieveContext = async (userId, userQuery, category = null, topK = 5) => 
       };
     });
 
-    const topContexts = scoredConversations
+    const recentContexts = allConversations.slice(0, Math.min(3, allConversations.length));
+
+    const semanticContexts = scoredConversations
       .sort((a, b) => b.combinedScore - a.combinedScore)
       .slice(0, topK);
+
+    const mergedMap = new Map();
+    [...recentContexts, ...semanticContexts].forEach((ctx) => {
+      mergedMap.set(String(ctx._id), ctx);
+    });
+    const topContexts = Array.from(mergedMap.values()).slice(0, Math.max(topK, 5));
 
     return {
       contexts: topContexts.map((ctx) => ({
