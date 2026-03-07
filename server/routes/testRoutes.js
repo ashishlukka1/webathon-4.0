@@ -18,13 +18,13 @@ router.get("/validate-api", async (req, res) => {
       res.json({
         status: "✓ Valid",
         message: validation.message,
-        apiKeySet: !!process.env.GEMINI_API_KEY,
+        apiKeySet: !!process.env.GROQ_API_KEY,
       });
     } else {
       res.status(400).json({
         status: "✗ Invalid",
         message: validation.message,
-        apiKeySet: !!process.env.GEMINI_API_KEY,
+        apiKeySet: !!process.env.GROQ_API_KEY,
       });
     }
   } catch (err) {
@@ -117,9 +117,6 @@ router.post("/seed", async (req, res) => {
             category: data.category || "general",
             tags,
             embedding,
-            chatId: data.chatId || `chat-${Date.now()}`,
-            outcome: { successScore: data.successScore || 0.8 },
-            sentiment: data.sentiment || "neutral",
             createdAt: new Date(),
           };
         } catch (embedErr) {
@@ -242,18 +239,10 @@ router.get("/stats", async (req, res) => {
       groupId: { $ne: null },
     });
 
-    const avgRagResult = await Conversation.aggregate([
-      { $match: { userId: mongoose.Types.ObjectId(userId) } },
-      { $group: { _id: null, avg: { $avg: "$ragRetrievalCount" } } },
-    ]);
-
-    const avgRagRetrievals = avgRagResult[0]?.avg || 0;
-
     res.json({
       totalConversations: totalConvos,
       conversationsInGroups: totalGroups,
       groupingEligible: totalConvos >= 10,
-      avgRagRetrievals: parseFloat(avgRagRetrievals.toFixed(2)),
       embeddingModel: "MiniLM (Xenova/all-MiniLM-L6-v2)",
     });
   } catch (err) {

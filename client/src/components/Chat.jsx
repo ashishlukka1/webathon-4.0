@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axiosInstance from "../components/api";
+import { LoaderCircle, LogOut, Mic, Send, Square } from "lucide-react";
 import "./Chat.css";
 
 const Chat = () => {
@@ -34,10 +35,9 @@ const Chat = () => {
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        console.log("📖 Loading chat history...");
-        const response = await axiosInstance.post("/chat", {
-          userId: user._id,
-          message: messageText,
+        console.log("Loading chat history...");
+        const response = await axiosInstance.get("/chat/history", {
+          params: { userId: user._id },
         });
 
         if (response.data.conversations && response.data.conversations.length > 0) {
@@ -60,11 +60,11 @@ const Chat = () => {
             ]);
 
           setMessages(loadedMessages);
-          console.log(`✓ Loaded ${loadedMessages.length} messages from history`);
+          console.log(`Loaded ${loadedMessages.length} messages from history`);
 
           setStats({
             total: response.data.count,
-            grouped: "—",
+            grouped: "-",
             lastCategory: response.data.conversations[0]?.category || "",
           });
         }
@@ -87,7 +87,7 @@ const Chat = () => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setRecordingError("🔴 Speech recognition not supported. Please use Chrome.");
+      setRecordingError("Speech recognition not supported. Please use Chrome.");
       return;
     }
 
@@ -100,7 +100,7 @@ const Chat = () => {
       setIsRecording(true);
       isRecordingRef.current = true;
       lastResultIndexRef.current = 0;
-      console.log("🎤 Recording started...");
+      console.log("Recording started...");
     };
 
     recognition.onresult = (event) => {
@@ -111,10 +111,10 @@ const Chat = () => {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           finalTranscript += transcript + " ";
-          console.log(`✓ Final: "${transcript}"`);
+          console.log(`Final: "${transcript}"`);
         } else {
           interimTranscript += transcript;
-          console.log(`~ Interim: "${transcript}"`);
+          console.log(`Interim: "${transcript}"`);
         }
       }
 
@@ -134,7 +134,7 @@ const Chat = () => {
 
     recognition.onerror = (e) => {
       if (e.error !== "no-speech") {
-        setRecordingError(`🔴 Mic error: ${e.error}`);
+        setRecordingError(`Mic error: ${e.error}`);
         console.error("Mic error:", e.error);
       }
     };
@@ -145,7 +145,7 @@ const Chat = () => {
         recognition.start();
       } else {
         setIsRecording(false);
-        console.log("🎤 Recording stopped");
+        console.log("Recording stopped");
       }
     };
 
@@ -159,7 +159,7 @@ const Chat = () => {
     recognitionRef.current?.stop();
     setIsRecording(false);
     lastResultIndexRef.current = 0;
-    console.log("⏹️ Recording stopped by user");
+    console.log("Recording stopped by user");
   };
 
   const handleSendMessage = async (e) => {
@@ -178,7 +178,7 @@ const Chat = () => {
     setLoading(true);
 
     // Typing reaction phases
-    const phases = ["Analyzing…", "Processing…", "Formulating…", "Almost there…"];
+    const phases = ["Analyzing...", "Processing...", "Formulating...", "Almost there..."];
     let phaseIdx = 0;
     setTypingPhase(phases[0]);
     const phaseInterval = setInterval(() => {
@@ -187,26 +187,25 @@ const Chat = () => {
     }, 1000);
 
     try {
-      console.log("📤 Sending message...");
+      console.log("Sending message...");
       const response = await axiosInstance.post("/chat", {
         userId: user._id,
         message: messageText,
       });
 
-
-      console.log("✓ Response received");
+      console.log("Response received");
 
       const aiMessage = {
         id: Date.now() + 1,
         type: "ai",
         content: response.data.message,
-        category: response.data.metadata.categoryDetected,
-        confidence: response.data.metadata.classificationConfidence,
-        allScores: response.data.metadata.classificationScores,
-        ragUsed: response.data.metadata.ragUsed,
-        contextSource: response.data.metadata.contextSource,
-        autoSaved: response.data.metadata.autoSaved,
-        groupingTriggered: response.data.metadata.groupingTriggered,
+        category: response.data.metadata?.categoryDetected,
+        confidence: response.data.metadata?.classificationConfidence,
+        allScores: response.data.metadata?.classificationScores,
+        ragUsed: response.data.metadata?.ragUsed,
+        contextSource: response.data.metadata?.contextSource,
+        autoSaved: response.data.metadata?.autoSaved,
+        groupingTriggered: response.data.metadata?.groupingTriggered,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -214,13 +213,13 @@ const Chat = () => {
       setTypingPhase("");
 
       setStats({
-        total: response.data.metadata.totalConversations,
-        grouped: response.data.metadata.groupingTriggered ? "✓ Grouped" : "—",
-        lastCategory: response.data.metadata.categoryDetected,
+        total: response.data.metadata?.totalConversations || 0,
+        grouped: response.data.metadata?.groupingTriggered ? "Grouped" : "-",
+        lastCategory: response.data.metadata?.categoryDetected || "",
       });
 
       if (response.data.metadata.groupingTriggered) {
-        console.log("🎯 Auto-grouping triggered!");
+        console.log("Auto-grouping triggered");
       }
     } catch (err) {
       const errorMessage = {
@@ -260,18 +259,22 @@ const Chat = () => {
 
   return (
     <div className="chat-container">
-
-      {/* ── TOP NAV ── */}
       <header className="chat-header">
         <div className="brand">FRIDAY</div>
 
         <div className="header-right">
           <div className="chat-stats-inline">
-            💾 {stats.total} saved &nbsp;|&nbsp; {stats.grouped} &nbsp;|&nbsp;
-            {stats.lastCategory && <><strong>{stats.lastCategory}</strong></>}
+            <span>{stats.total} saved</span>
+            <span className="dot-sep">/</span>
+            <span>{stats.grouped}</span>
+            {stats.lastCategory && (
+              <>
+                <span className="dot-sep">/</span>
+                <strong>{stats.lastCategory}</strong>
+              </>
+            )}
           </div>
 
-          {/* Avatar + Dropdown */}
           <div className="user-menu" ref={dropdownRef}>
             <button
               className="avatar-btn"
@@ -289,12 +292,7 @@ const Chat = () => {
                 </div>
                 <div className="dropdown-divider" />
                 <button className="dropdown-logout" onClick={handleLogout}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
+                  <LogOut size={15} />
                   Log out
                 </button>
               </div>
@@ -303,37 +301,28 @@ const Chat = () => {
         </div>
       </header>
 
-      {/* ── INFO BAR ── */}
-      <div className="chat-info">
-        🤖 BART AI classifier &nbsp;·&nbsp; 💾 Auto-saved &nbsp;·&nbsp;
-        📊 Groups at 10+ messages &nbsp;·&nbsp; 🎤 Voice input enabled &nbsp;·&nbsp;
-        🔄 Persists on refresh
-      </div>
+      {/* <div className="chat-info">
+        BART classifier / Auto-save / Grouping at 10+ messages / Voice input / Session persistence
+      </div> */}
 
-      {recordingError && (
-        <div className="recording-error">{recordingError}</div>
-      )}
+      {recordingError && <div className="recording-error">{recordingError}</div>}
 
-      {/* ── MESSAGES ── */}
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="welcome-screen">
             <div className="welcome-content">
-              <h1 className="welcome-title">
-                Good to see you.<br />
-                What&apos;s on your mind?
-              </h1>
+              <h1 className="welcome-title">What are we building today?</h1>
               <p className="welcome-sub">
-                Ask me anything — I&apos;m here to help you think, create, and explore.
+                Ask questions, plan tasks, and generate structured responses with persistent context.
               </p>
-              <div className="welcome-chips">
+              {/* <div className="welcome-chips">
                 {[
-                  "Summarize a document",
-                  "Help me write something",
-                  "Explain a concept",
-                  "Brainstorm ideas",
-                  "Analyze my data",
-                  "Draft an email",
+                  "Summarize this document",
+                  "Explain this concept",
+                  "Brainstorm product ideas",
+                  "Draft a response",
+                  "Create release notes",
+                  "Review this approach",
                 ].map((chip) => (
                   <button
                     key={chip}
@@ -343,7 +332,7 @@ const Chat = () => {
                     {chip}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
         )}
@@ -354,15 +343,15 @@ const Chat = () => {
             <div className="message-tags">
               {msg.category && (
                 <span className="category-tag">
-                  🤖 {msg.category}
+                  Category: {msg.category}
                   {msg.confidence > 0 && (
-                    <span className="confidence">({(msg.confidence * 100).toFixed(0)}%)</span>
+                    <span className="confidence">{(msg.confidence * 100).toFixed(0)}%</span>
                   )}
                 </span>
               )}
-              {msg.autoSaved && <span className="category-tag tag-saved">💾 Saved</span>}
-              {msg.ragUsed && <span className="category-tag tag-rag">🔍 RAG</span>}
-              {msg.groupingTriggered && <span className="category-tag tag-grouped">📊 Grouped</span>}
+              {msg.autoSaved && <span className="category-tag tag-saved">Saved</span>}
+              {msg.ragUsed && <span className="category-tag tag-rag">RAG</span>}
+              {msg.groupingTriggered && <span className="category-tag tag-grouped">Grouped</span>}
             </div>
           </div>
         ))}
@@ -371,7 +360,9 @@ const Chat = () => {
           <div className="message message-ai typing-bubble">
             <div className="typing-reaction">
               <div className="typing-dots">
-                <span /><span /><span />
+                <span />
+                <span />
+                <span />
               </div>
               <span className="typing-phase">{typingPhase}</span>
             </div>
@@ -382,21 +373,19 @@ const Chat = () => {
         )}
       </div>
 
-      {/* ── RECORDING INDICATOR ── */}
       {isRecording && (
         <div className="recording-indicator">
           <div className="recording-dot" />
-          <span>🎤 Recording... Speak now or click mic to stop</span>
+          <span>Recording in progress. Speak now or tap the mic to stop.</span>
         </div>
       )}
 
-      {/* ── INPUT ── */}
       <form onSubmit={handleSendMessage} className="chat-input-form">
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder={isRecording ? "🎤 Listening... speak now" : "Type or click mic to speak..."}
+          placeholder={isRecording ? "Listening... speak now" : "Type a message or use voice input"}
           disabled={loading}
           className="chat-input"
           autoFocus
@@ -410,15 +399,9 @@ const Chat = () => {
           disabled={loading}
         >
           {isRecording ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff4d4d">
-              <circle cx="12" cy="12" r="8" opacity="0.3"/>
-              <rect x="9" y="9" width="6" height="6" rx="1" fill="#ff4d4d"/>
-            </svg>
+            <Square size={18} fill="currentColor" />
           ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#4f46e5">
-              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" />
-              <path d="M19 10a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V21H9v2h6v-2h-2v-2.06A9 9 0 0 0 21 10z" />
-            </svg>
+            <Mic size={18} />
           )}
         </button>
 
@@ -428,15 +411,9 @@ const Chat = () => {
           className="chat-submit"
         >
           {loading ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10" opacity="0.3"/>
-              <path d="M12 2a10 10 0 0 1 10 10" strokeOpacity="1"/>
-            </svg>
+            <LoaderCircle size={18} className="icon-spin" />
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
+            <Send size={18} />
           )}
         </button>
       </form>

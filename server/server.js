@@ -14,7 +14,6 @@ const chatRoutes = require("./routes/chatRoutes");
 const testRoutes = require("./routes/testRoutes");
 const userRoutes = require("./routes/userRoutes");
 const speechRoutes = require("./routes/speech");
-const fileRoutes = require("./routes/fileRoutes");
 
 const app = express();
 
@@ -33,7 +32,6 @@ connectDB();
 
 // Routes
 app.use("/api/speech", speechRoutes);
-app.use("/api/files", fileRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/auth", userRoutes);
@@ -56,10 +54,10 @@ if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`\n📝 Available endpoints:`);
-    console.log(`   POST /api/files/upload`);
-    console.log(`   GET /api/files/history`);
-    console.log(`   GET /api/files/:fileId/visualization`);
-    console.log(`   POST /api/files/:fileId/ask\n`);
+    console.log(`   POST /api/auth/login`);
+    console.log(`   POST /api/auth/register`);
+    console.log(`   POST /api/chat`);
+    console.log(`   GET  /api/chat/history\n`);
   });
 }
 

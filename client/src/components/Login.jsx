@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import axiosInstance from "./api";
 import "./Login.css";
 
@@ -73,23 +75,41 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <div className="card">
-        <div className="brand1">Jarvis</div>
+      <div className="auth-grid" aria-hidden="true" />
+      <div className="auth-glow auth-glow-1" aria-hidden="true" />
+      <div className="auth-glow auth-glow-2" aria-hidden="true" />
+      <Link to="/" className="back-home">
+        <ArrowLeft size={15} />
+        Back to Home
+      </Link>
 
-        <div className="headline">
-          {isRegister
-            ? "Create your account to continue"
-            : "Welcome back — sign in to continue"}
+      <div className="card">
+        <div className="brand-row">
+          <Link to="/" className="linktohome">FRIDAY</Link>
+          <span className="brand-badge">Secure</span>
         </div>
 
-        {error && <div className="error-box">⚠ {error}</div>}
+        <div className="mode-tabs" role="tablist" aria-label="Authentication mode">
+          <button type="button" className={`mode-tab ${!isRegister ? "active" : ""}`} onClick={() => isRegister && toggleMode()} disabled={loading}>
+            Sign In
+          </button>
+          <button type="button" className={`mode-tab ${isRegister ? "active" : ""}`} onClick={() => !isRegister && toggleMode()} disabled={loading}>
+            Register
+          </button>
+        </div>
+
+        <h1 className="title">{isRegister ? "Create your account" : "Welcome back"}</h1>
+        <p className="headline"></p>
+
+        {error && <div className="error-box">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           {isRegister && (
             <div className="field">
-              <label>Full Name</label>
+              <label htmlFor="name">Full Name</label>
               <div className="input-wrap">
                 <input
+                  id="name"
                   type="text"
                   name="name"
                   value={formData.name}
@@ -97,15 +117,17 @@ const Login = () => {
                   required
                   disabled={loading}
                   placeholder="John Doe"
+                  autoComplete="name"
                 />
               </div>
             </div>
           )}
 
           <div className="field">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <div className="input-wrap">
               <input
+                id="email"
                 type="email"
                 name="email"
                 value={formData.email}
@@ -113,14 +135,16 @@ const Login = () => {
                 required
                 disabled={loading}
                 placeholder="you@example.com"
+                autoComplete="email"
               />
             </div>
           </div>
 
           <div className="field">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <div className="input-wrap">
               <input
+                id="password"
                 type={showPw ? "text" : "password"}
                 name="password"
                 value={formData.password}
@@ -128,6 +152,7 @@ const Login = () => {
                 required
                 disabled={loading}
                 placeholder="Enter your password"
+                autoComplete={isRegister ? "new-password" : "current-password"}
               />
               <button
                 type="button"
@@ -140,34 +165,10 @@ const Login = () => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={loading}
-          >
-            {loading
-              ? "Loading..."
-              : isRegister
-              ? "Create Account"
-              : "Sign In"}
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? "Loading..." : isRegister ? "Create Account" : "Sign In"}
           </button>
         </form>
-
-        <div className="divider">or</div>
-
-        <div className="toggle-text">
-          {isRegister
-            ? "Already have an account?"
-            : "Don't have an account?"}
-          <button
-            type="button"
-            className="mode-switch"
-            onClick={toggleMode}
-            disabled={loading}
-          >
-            {isRegister ? "Sign In" : "Register"}
-          </button>
-        </div>
       </div>
     </div>
   );

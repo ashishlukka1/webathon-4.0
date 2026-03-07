@@ -13,35 +13,32 @@ const conversationGroupSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    tags: [String],
+    tags: {
+      type: [String],
+      default: [],
+    },
     conversationCount: {
       type: Number,
       default: 0,
     },
-    centroidEmbedding: [Number],
+    centroidEmbedding: {
+      type: [Number],
+      default: [],
+    },
     conversationIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Conversation",
       },
     ],
-    summary: String,
-    averageSentiment: {
+    summary: {
       type: String,
-      enum: ["positive", "neutral", "negative"],
-      default: "neutral",
-    },
-    averageSuccessScore: {
-      type: Number,
-      min: 0,
-      max: 1,
-      default: 0.5,
+      default: "",
     },
   },
   { timestamps: true }
 );
 
 conversationGroupSchema.index({ userId: 1, category: 1 });
-conversationGroupSchema.index({ userId: 1, tags: 1 });
 
 module.exports = mongoose.model("ConversationGroup", conversationGroupSchema);

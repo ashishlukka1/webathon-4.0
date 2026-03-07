@@ -70,8 +70,9 @@ const classifyCategory = async (userMessage) => {
     });
 
     const bestLabelIndex = labels.indexOf(result.labels[0]);
-    const detectedCategory = keys[bestLabelIndex];
+    const rawCategory = keys[bestLabelIndex];
     const confidence = result.scores[0];
+    const detectedCategory = confidence >= 0.35 ? rawCategory : "general";
 
     console.log(`✓ Best match: ${detectedCategory}`);
 
@@ -107,6 +108,7 @@ const generateAIResponse = async (userMessage, contextData = null) => {
 
     let contextString = "";
     let mostRecentContext = "";
+    const userName = contextData?.memory?.name || "";
 
     if (contextData && contextData.contexts && contextData.contexts.length > 0) {
 
@@ -145,6 +147,12 @@ RESPONSE STYLE:
 - No bullet points
 - No lists
 - Direct answers only
+
+MEMORY RULE:
+- If user identity is known from prior messages, use it accurately.
+- Never claim missing identity data if memory explicitly provides it.
+
+${userName ? `KNOWN USER NAME: ${userName}` : ""}
 
 ${contextString}`;
 
